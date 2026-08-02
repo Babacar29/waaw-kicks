@@ -10,6 +10,11 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-waaw-black: #0A0A0A;
+  --color-waaw-yellow: #FFD400;
+  --color-waaw-red: #E8352E;
+  --font-display: 'Arial Black', 'Helvetica Neue', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
