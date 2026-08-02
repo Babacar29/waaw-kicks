@@ -23,10 +23,14 @@ const localStorageMock = (() => {
   }
 })()
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-})
+// Only applies to jsdom-environment test files; node-environment tests
+// (e.g. `// @vitest-environment node`) have no `window` global.
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+  })
 
-beforeEach(() => {
-  window.localStorage.clear()
-})
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+}
