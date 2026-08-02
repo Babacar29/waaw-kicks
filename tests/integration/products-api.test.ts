@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { GET, POST } from '../../app/api/products/route'
-import { GET as GET_ONE } from '../../app/api/products/[id]/route'
+import { GET as GET_ONE, PUT } from '../../app/api/products/[id]/route'
 import { sql } from '../../lib/db'
 import { signSession } from '../../lib/admin-auth'
 
@@ -54,5 +54,21 @@ describe('/api/products', () => {
     const req = new Request('http://localhost/api/products/999999')
     const res = await GET_ONE(req, { params: Promise.resolve({ id: '999999' }) })
     expect(res.status).toBe(404)
+  })
+
+  it('rejects PUT with a missing required field', async () => {
+    const token = await signSession()
+    const listReq = new Request('http://localhost/api/products?categorie=homme')
+    const [existing] = await (await GET(listReq)).json()
+
+    const req = new Request(`http://localhost/api/products/${existing.id}`, {
+      method: 'PUT',
+      headers: { cookie: `admin_session=${token}` },
+      body: JSON.stringify({
+        description: 'Sans nom', categorie: 'homme', marque: 'Waaw Kicks', prix: 30000, photos: [],
+      }),
+    })
+    const res = await PUT(req, { params: Promise.resolve({ id: String(existing.id) }) })
+    expect(res.status).toBe(400)
   })
 })

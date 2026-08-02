@@ -19,6 +19,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const body = await request.json()
   const { nom, description, categorie, marque, prix, photos, actif } = body
 
+  if (!nom || !categorie || !prix) {
+    return Response.json({ error: 'Champs requis manquants' }, { status: 400 })
+  }
+
   const [updated] = await sql(
     `UPDATE products SET nom = $1, description = $2, categorie = $3, marque = $4,
      prix = $5, photos = $6, actif = $7 WHERE id = $8 RETURNING *`,
