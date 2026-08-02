@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useCartStore } from '../../lib/cart-store'
 import { buildWhatsAppMessage, buildWhatsAppLink } from '../../lib/whatsapp'
 
 export default function CheckoutPage() {
-  const router = useRouter()
   const items = useCartStore((s) => s.items)
   const total = useCartStore((s) => s.total())
   const clear = useCartStore((s) => s.clear)
@@ -52,7 +50,7 @@ export default function CheckoutPage() {
     })
     const link = buildWhatsAppLink(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '', message)
     clear()
-    router.push(link)
+    window.location.href = link
   }
 
   return (
