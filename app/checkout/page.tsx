@@ -22,35 +22,40 @@ export default function CheckoutPage() {
     }
 
     setLoading(true)
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nom_client: form.nom,
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom_client: form.nom,
+          telephone: form.telephone,
+          adresse: form.adresse,
+          items,
+        }),
+      })
+
+      if (res.status === 409) {
+        setError('Un article de ton panier n’est plus disponible en stock.')
+        return
+      }
+      if (!res.ok) {
+        setError('Une erreur est survenue, réessaie.')
+        return
+      }
+
+      const message = buildWhatsAppMessage(items, total, {
+        nom: form.nom,
         telephone: form.telephone,
         adresse: form.adresse,
-        items,
-      }),
-    })
-    setLoading(false)
-
-    if (res.status === 409) {
-      setError('Un article de ton panier n’est plus disponible en stock.')
-      return
-    }
-    if (!res.ok) {
+      })
+      const link = buildWhatsAppLink(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '', message)
+      clear()
+      window.location.href = link
+    } catch {
       setError('Une erreur est survenue, réessaie.')
-      return
+    } finally {
+      setLoading(false)
     }
-
-    const message = buildWhatsAppMessage(items, total, {
-      nom: form.nom,
-      telephone: form.telephone,
-      adresse: form.adresse,
-    })
-    const link = buildWhatsAppLink(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '', message)
-    clear()
-    window.location.href = link
   }
 
   return (
