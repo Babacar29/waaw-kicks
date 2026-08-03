@@ -100,10 +100,15 @@ export function useTiltGesture<T extends HTMLElement>(ref: RefObject<T | null>):
   function requestPermission(): void {
     const permissionAPI = getOrientationPermissionAPI()
     if (!permissionAPI) return
-    permissionAPI.requestPermission().then((state) => {
-      setNeedsPermissionPrompt(false)
-      if (state === 'granted') setOrientationEnabled(true)
-    })
+    permissionAPI
+      .requestPermission()
+      .then((state) => {
+        setNeedsPermissionPrompt(false)
+        if (state === 'granted') setOrientationEnabled(true)
+      })
+      .catch(() => {
+        setNeedsPermissionPrompt(false)
+      })
   }
 
   return { needsPermissionPrompt, requestPermission }
