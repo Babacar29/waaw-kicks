@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
+import { ProductTilt } from '../../../components/ProductTilt'
 import { SizeSelector } from '../../../components/SizeSelector'
 import { useCartStore } from '../../../lib/cart-store'
 import type { Product, Variant } from '../../../lib/types'
@@ -33,17 +34,11 @@ export default function ProductPage() {
     <main className="min-h-screen bg-waaw-black pb-28 text-white sm:pb-6">
       <div className="mx-auto max-w-5xl px-4 py-6 sm:grid sm:grid-cols-2 sm:gap-10">
         <div>
-          <div className="relative aspect-square overflow-hidden rounded-3xl bg-waaw-surface-2">
-            {product.photos[activePhoto] && (
-              <Image
-                src={product.photos[activePhoto]}
-                alt={product.nom}
-                fill
-                priority
-                className="object-cover"
-              />
-            )}
-          </div>
+          {product.photos[activePhoto] ? (
+            <ProductTilt src={product.photos[activePhoto]} alt={product.nom} />
+          ) : (
+            <div className="relative aspect-square overflow-hidden rounded-3xl bg-waaw-surface-2" />
+          )}
           {product.photos.length > 1 && (
             <div className="mt-3 flex gap-2 overflow-x-auto">
               {product.photos.map((photo, i) => (
