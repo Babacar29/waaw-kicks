@@ -13,17 +13,14 @@ export interface UseTiltGestureResult {
 }
 
 export function useTiltGesture<T extends HTMLElement>(ref: RefObject<T | null>): UseTiltGestureResult {
-  const [needsPermissionPrompt, setNeedsPermissionPrompt] = useState(false)
-  const [orientationEnabled, setOrientationEnabled] = useState(false)
-
-  useEffect(() => {
-    const permissionAPI = getOrientationPermissionAPI()
-    if (permissionAPI) {
-      setNeedsPermissionPrompt(true)
-    } else if (typeof window.DeviceOrientationEvent !== 'undefined') {
-      setOrientationEnabled(true)
-    }
-  }, [])
+  const [needsPermissionPrompt, setNeedsPermissionPrompt] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getOrientationPermissionAPI() !== null
+  })
+  const [orientationEnabled, setOrientationEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getOrientationPermissionAPI() === null && typeof window.DeviceOrientationEvent !== 'undefined'
+  })
 
   useEffect(() => {
     const el = ref.current
