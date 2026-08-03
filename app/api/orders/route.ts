@@ -15,6 +15,25 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Champs requis manquants' }, { status: 400 })
   }
 
+  if (items.length > 20) {
+    return Response.json({ error: 'Trop d’articles dans la commande' }, { status: 400 })
+  }
+
+  const isValidItem = (item: OrderItem): boolean =>
+    Number.isInteger(item.variant_id) &&
+    item.variant_id > 0 &&
+    Number.isInteger(item.product_id) &&
+    item.product_id > 0 &&
+    Number.isInteger(item.quantite) &&
+    item.quantite > 0 &&
+    typeof item.prix === 'number' &&
+    Number.isFinite(item.prix) &&
+    item.prix > 0
+
+  if (!items.every(isValidItem)) {
+    return Response.json({ error: 'Article invalide dans la commande' }, { status: 400 })
+  }
+
   // Stock check-and-decrement must be a single atomic statement per item —
   // a separate SELECT-then-UPDATE lets two concurrent requests both pass
   // validation before either decrements, overselling the variant (the

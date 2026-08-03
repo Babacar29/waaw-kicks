@@ -66,6 +66,75 @@ describe('/api/orders', () => {
     expect(res.status).toBe(401)
   })
 
+  it('rejects an order with a negative quantite without touching stock', async () => {
+    const [before] = (await sql('SELECT quantite_stock FROM variants WHERE id = $1', [
+      variantId,
+    ])) as { quantite_stock: number }[]
+
+    const req = new Request('http://localhost/api/orders', {
+      method: 'POST',
+      body: JSON.stringify({
+        nom_client: 'Fatou',
+        telephone: '77xxx',
+        adresse: 'Dakar',
+        items: [
+          {
+            product_id: productId,
+            variant_id: variantId,
+            nom: 'Air Waaw',
+            pointure: '42',
+            couleur: 'Noir',
+            prix: 25000,
+            quantite: -100,
+          },
+        ],
+      }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+
+    const [after] = (await sql('SELECT quantite_stock FROM variants WHERE id = $1', [
+      variantId,
+    ])) as { quantite_stock: number }[]
+    // Stock must be untouched — a negative quantite must never reach the DB.
+    expect(after.quantite_stock).toBe(before.quantite_stock)
+  })
+
+  it('rejects an order with more than 20 items', async () => {
+    const items = Array.from({ length: 21 }, () => ({
+      product_id: productId,
+      variant_id: variantId,
+      nom: 'Air Waaw',
+      pointure: '42',
+      couleur: 'Noir',
+      prix: 25000,
+      quantite: 1,
+    }))
+    const req = new Request('http://localhost/api/orders', {
+      method: 'POST',
+      body: JSON.stringify({
+        nom_client: 'Fatou',
+        telephone: '77xxx',
+        adresse: 'Dakar',
+        items,
+      }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects an invalid statut on PATCH', async () => {
+    const [order] = await sql('SELECT id FROM orders LIMIT 1')
+    const token = await signSession()
+    const req = new Request(`http://localhost/api/orders/${order.id}`, {
+      method: 'PATCH',
+      headers: { cookie: `admin_session=${token}` },
+      body: JSON.stringify({ statut: 'not-a-real-status' }),
+    })
+    const res = await PATCH(req, { params: Promise.resolve({ id: String(order.id) }) })
+    expect(res.status).toBe(400)
+  })
+
   it('updates order status with admin session', async () => {
     const [order] = await sql('SELECT id FROM orders LIMIT 1')
     const token = await signSession()

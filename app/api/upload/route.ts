@@ -22,6 +22,10 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Fichier trop volumineux (5 Mo max)' }, { status: 400 })
   }
 
-  const blob = await put(`products/${Date.now()}-${file.name}`, file, { access: 'public' })
+  const rawExtension = file.name.split('.').pop() ?? ''
+  const safeExtension = /^[a-zA-Z0-9]{1,10}$/.test(rawExtension) ? rawExtension.toLowerCase() : 'bin'
+  const filename = `products/${Date.now()}-${crypto.randomUUID()}.${safeExtension}`
+
+  const blob = await put(filename, file, { access: 'public' })
   return Response.json({ url: blob.url })
 }
