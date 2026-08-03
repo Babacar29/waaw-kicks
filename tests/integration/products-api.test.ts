@@ -4,17 +4,27 @@ import { GET, POST } from '../../app/api/products/route'
 import { GET as GET_ONE, PUT } from '../../app/api/products/[id]/route'
 import { sql } from '../../lib/db'
 import { signSession } from '../../lib/admin-auth'
+import { PRODUCTS_TEST_PRODUCT_NAME } from './test-constants'
 
+// These tests hit the same DATABASE_URL as the dev server and admin panel
+// (lib/db.ts, no separate test database) — every query here must be scoped
+// to PRODUCTS_TEST_PRODUCT_NAME so it never touches real catalogue data.
 describe('/api/products', () => {
   beforeAll(async () => {
     process.env.ADMIN_SESSION_SECRET = 'test-secret-at-least-32-characters-long'
-    await sql('DELETE FROM variants')
-    await sql('DELETE FROM products')
+    await sql(
+      `DELETE FROM variants WHERE product_id IN (SELECT id FROM products WHERE nom = $1)`,
+      [PRODUCTS_TEST_PRODUCT_NAME]
+    )
+    await sql('DELETE FROM products WHERE nom = $1', [PRODUCTS_TEST_PRODUCT_NAME])
   })
 
   afterAll(async () => {
-    await sql('DELETE FROM variants')
-    await sql('DELETE FROM products')
+    await sql(
+      `DELETE FROM variants WHERE product_id IN (SELECT id FROM products WHERE nom = $1)`,
+      [PRODUCTS_TEST_PRODUCT_NAME]
+    )
+    await sql('DELETE FROM products WHERE nom = $1', [PRODUCTS_TEST_PRODUCT_NAME])
   })
 
   it('rejects creation without admin session', async () => {
@@ -32,22 +42,23 @@ describe('/api/products', () => {
       method: 'POST',
       headers: { cookie: `admin_session=${token}` },
       body: JSON.stringify({
-        nom: 'Air Waaw', description: 'Sneaker urbaine', categorie: 'homme',
+        nom: PRODUCTS_TEST_PRODUCT_NAME, description: 'Sneaker urbaine', categorie: 'homme',
         marque: 'Waaw Kicks', prix: 25000, photos: [],
       }),
     })
     const res = await POST(req)
     expect(res.status).toBe(201)
     const created = await res.json()
-    expect(created.nom).toBe('Air Waaw')
+    expect(created.nom).toBe(PRODUCTS_TEST_PRODUCT_NAME)
   })
 
   it('lists products filtered by categorie', async () => {
     const req = new Request('http://localhost/api/products?categorie=homme')
     const res = await GET(req)
     const products = await res.json()
-    expect(products.length).toBeGreaterThan(0)
-    expect(products[0].categorie).toBe('homme')
+    const created = products.find((p: { nom: string }) => p.nom === PRODUCTS_TEST_PRODUCT_NAME)
+    expect(created).toBeDefined()
+    expect(created.categorie).toBe('homme')
   })
 
   it('returns 404 for an unknown product id', async () => {
@@ -59,7 +70,8 @@ describe('/api/products', () => {
   it('rejects PUT with a missing required field', async () => {
     const token = await signSession()
     const listReq = new Request('http://localhost/api/products?categorie=homme')
-    const [existing] = await (await GET(listReq)).json()
+    const products = await (await GET(listReq)).json()
+    const existing = products.find((p: { nom: string }) => p.nom === PRODUCTS_TEST_PRODUCT_NAME)
 
     const req = new Request(`http://localhost/api/products/${existing.id}`, {
       method: 'PUT',

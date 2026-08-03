@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Inter } from "next/font/google";
 import "./globals.css";
 import { RegisterServiceWorker } from "./register-sw";
-import { Header } from "../components/Header";
+import { ConditionalHeader } from "./conditional-header";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,7 +37,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-waaw-black">
         <RegisterServiceWorker />
-        <Header />
+        <ConditionalHeader />
         {children}
       </body>
     </html>

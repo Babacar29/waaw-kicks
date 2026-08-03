@@ -1,34 +1,28 @@
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { sql } from '../../../../lib/db'
 import type { Product } from '../../../../lib/types'
+import { AdminPageHeader, AdminButton } from '../../../../components/admin/ui'
+import { ProductsTable } from '../../../../components/admin/ProductsTable'
 
 export default async function AdminProductsPage() {
   const products = (await sql('SELECT * FROM products ORDER BY created_at DESC')) as unknown as Product[]
 
   return (
-    <main className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="font-bold text-xl">Produits</h1>
-        <Link href="/admin/produits/nouveau" className="bg-black text-white px-4 py-2 rounded">
-          + Nouveau produit
-        </Link>
-      </div>
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="border-b"><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Actif</th><th></th></tr>
-        </thead>
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.id} className="border-b">
-              <td className="py-2">{p.nom}</td>
-              <td>{p.categorie}</td>
-              <td>{p.prix.toLocaleString('fr-FR')} FCFA</td>
-              <td>{p.actif ? 'Oui' : 'Non'}</td>
-              <td><Link href={`/admin/produits/${p.id}`} className="text-blue-600 underline">Gérer</Link></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </main>
+    <div>
+      <AdminPageHeader
+        title="Produits"
+        description={`${products.length} produit${products.length > 1 ? 's' : ''} au catalogue`}
+        actions={
+          <Link href="/admin/produits/nouveau">
+            <AdminButton>
+              <Plus size={16} />
+              Nouveau produit
+            </AdminButton>
+          </Link>
+        }
+      />
+      <ProductsTable products={products} />
+    </div>
   )
 }

@@ -4,18 +4,27 @@ import { POST, GET } from '../../app/api/orders/route'
 import { PATCH } from '../../app/api/orders/[id]/route'
 import { sql } from '../../lib/db'
 import { signSession } from '../../lib/admin-auth'
+import { ORDERS_TEST_PRODUCT_NAME, ORDERS_TEST_CLIENT_NAME } from './test-constants'
 
+// These tests hit the same DATABASE_URL as the dev server and admin panel
+// (lib/db.ts, no separate test database) — every query here must be scoped
+// to productId/ORDERS_TEST_CLIENT_NAME so it never touches real data.
 describe('/api/orders', () => {
   let productId: number
   let variantId: number
+  let orderId: number
 
   beforeAll(async () => {
     process.env.ADMIN_SESSION_SECRET = 'test-secret-at-least-32-characters-long'
-    await sql('DELETE FROM orders')
-    await sql('DELETE FROM variants')
-    await sql('DELETE FROM products')
+    await sql('DELETE FROM orders WHERE nom_client = $1', [ORDERS_TEST_CLIENT_NAME])
+    await sql(
+      `DELETE FROM variants WHERE product_id IN (SELECT id FROM products WHERE nom = $1)`,
+      [ORDERS_TEST_PRODUCT_NAME]
+    )
+    await sql('DELETE FROM products WHERE nom = $1', [ORDERS_TEST_PRODUCT_NAME])
     const [product] = (await sql(
-      `INSERT INTO products (nom, categorie, prix) VALUES ('Air Waaw', 'homme', 25000) RETURNING id`
+      `INSERT INTO products (nom, categorie, prix) VALUES ($1, 'homme', 25000) RETURNING id`,
+      [ORDERS_TEST_PRODUCT_NAME]
     )) as { id: number }[]
     productId = product.id
     const [variant] = (await sql(
@@ -27,17 +36,17 @@ describe('/api/orders', () => {
   })
 
   afterAll(async () => {
-    await sql('DELETE FROM orders')
-    await sql('DELETE FROM variants')
-    await sql('DELETE FROM products')
+    await sql('DELETE FROM orders WHERE nom_client = $1', [ORDERS_TEST_CLIENT_NAME])
+    await sql('DELETE FROM variants WHERE product_id = $1', [productId])
+    await sql('DELETE FROM products WHERE id = $1', [productId])
   })
 
   it('rejects an order exceeding available stock', async () => {
     const req = new Request('http://localhost/api/orders', {
       method: 'POST',
       body: JSON.stringify({
-        nom_client: 'Fatou', telephone: '77xxx', adresse: 'Dakar',
-        items: [{ product_id: productId, variant_id: variantId, nom: 'Air Waaw', pointure: '42', couleur: 'Noir', prix: 25000, quantite: 5 }],
+        nom_client: ORDERS_TEST_CLIENT_NAME, telephone: '77xxx', adresse: 'Dakar',
+        items: [{ product_id: productId, variant_id: variantId, nom: ORDERS_TEST_PRODUCT_NAME, pointure: '42', couleur: 'Noir', prix: 25000, quantite: 5 }],
       }),
     })
     const res = await POST(req)
@@ -48,14 +57,15 @@ describe('/api/orders', () => {
     const req = new Request('http://localhost/api/orders', {
       method: 'POST',
       body: JSON.stringify({
-        nom_client: 'Fatou', telephone: '77xxx', adresse: 'Dakar',
-        items: [{ product_id: productId, variant_id: variantId, nom: 'Air Waaw', pointure: '42', couleur: 'Noir', prix: 25000, quantite: 2 }],
+        nom_client: ORDERS_TEST_CLIENT_NAME, telephone: '77xxx', adresse: 'Dakar',
+        items: [{ product_id: productId, variant_id: variantId, nom: ORDERS_TEST_PRODUCT_NAME, pointure: '42', couleur: 'Noir', prix: 25000, quantite: 2 }],
       }),
     })
     const res = await POST(req)
     expect(res.status).toBe(201)
     const order = await res.json()
     expect(order.total).toBe(50000)
+    orderId = order.id
 
     const [variant] = await sql('SELECT quantite_stock FROM variants WHERE id = $1', [variantId])
     expect(variant.quantite_stock).toBe(0)
@@ -74,14 +84,14 @@ describe('/api/orders', () => {
     const req = new Request('http://localhost/api/orders', {
       method: 'POST',
       body: JSON.stringify({
-        nom_client: 'Fatou',
+        nom_client: ORDERS_TEST_CLIENT_NAME,
         telephone: '77xxx',
         adresse: 'Dakar',
         items: [
           {
             product_id: productId,
             variant_id: variantId,
-            nom: 'Air Waaw',
+            nom: ORDERS_TEST_PRODUCT_NAME,
             pointure: '42',
             couleur: 'Noir',
             prix: 25000,
@@ -104,7 +114,7 @@ describe('/api/orders', () => {
     const items = Array.from({ length: 21 }, () => ({
       product_id: productId,
       variant_id: variantId,
-      nom: 'Air Waaw',
+      nom: ORDERS_TEST_PRODUCT_NAME,
       pointure: '42',
       couleur: 'Noir',
       prix: 25000,
@@ -113,7 +123,7 @@ describe('/api/orders', () => {
     const req = new Request('http://localhost/api/orders', {
       method: 'POST',
       body: JSON.stringify({
-        nom_client: 'Fatou',
+        nom_client: ORDERS_TEST_CLIENT_NAME,
         telephone: '77xxx',
         adresse: 'Dakar',
         items,
@@ -124,26 +134,24 @@ describe('/api/orders', () => {
   })
 
   it('rejects an invalid statut on PATCH', async () => {
-    const [order] = await sql('SELECT id FROM orders LIMIT 1')
     const token = await signSession()
-    const req = new Request(`http://localhost/api/orders/${order.id}`, {
+    const req = new Request(`http://localhost/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: { cookie: `admin_session=${token}` },
       body: JSON.stringify({ statut: 'not-a-real-status' }),
     })
-    const res = await PATCH(req, { params: Promise.resolve({ id: String(order.id) }) })
+    const res = await PATCH(req, { params: Promise.resolve({ id: String(orderId) }) })
     expect(res.status).toBe(400)
   })
 
   it('updates order status with admin session', async () => {
-    const [order] = await sql('SELECT id FROM orders LIMIT 1')
     const token = await signSession()
-    const req = new Request(`http://localhost/api/orders/${order.id}`, {
+    const req = new Request(`http://localhost/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: { cookie: `admin_session=${token}` },
       body: JSON.stringify({ statut: 'confirmee' }),
     })
-    const res = await PATCH(req, { params: Promise.resolve({ id: String(order.id) }) })
+    const res = await PATCH(req, { params: Promise.resolve({ id: String(orderId) }) })
     expect(res.status).toBe(200)
     const updated = await res.json()
     expect(updated.statut).toBe('confirmee')
@@ -164,14 +172,14 @@ describe('/api/orders', () => {
         new Request('http://localhost/api/orders', {
           method: 'POST',
           body: JSON.stringify({
-            nom_client: 'Concurrent',
+            nom_client: ORDERS_TEST_CLIENT_NAME,
             telephone: '77xxx',
             adresse: 'Dakar',
             items: [
               {
                 product_id: productId,
                 variant_id: raceVariantId,
-                nom: 'Air Waaw',
+                nom: ORDERS_TEST_PRODUCT_NAME,
                 pointure: '43',
                 couleur: 'Blanc',
                 prix: 25000,
@@ -212,21 +220,24 @@ describe('/api/orders', () => {
       [productId]
     )) as { id: number }[]
 
-    const [{ count: countBefore }] = (await sql('SELECT COUNT(*) AS count FROM orders')) as {
+    const [{ count: countBefore }] = (await sql(
+      'SELECT COUNT(*) AS count FROM orders WHERE nom_client = $1',
+      [ORDERS_TEST_CLIENT_NAME]
+    )) as {
       count: string
     }[]
 
     const req = new Request('http://localhost/api/orders', {
       method: 'POST',
       body: JSON.stringify({
-        nom_client: 'Fatou',
+        nom_client: ORDERS_TEST_CLIENT_NAME,
         telephone: '77xxx',
         adresse: 'Dakar',
         items: [
           {
             product_id: productId,
             variant_id: okVariant.id,
-            nom: 'Air Waaw',
+            nom: ORDERS_TEST_PRODUCT_NAME,
             pointure: '44',
             couleur: 'Rouge',
             prix: 25000,
@@ -235,7 +246,7 @@ describe('/api/orders', () => {
           {
             product_id: productId,
             variant_id: shortVariant.id,
-            nom: 'Air Waaw',
+            nom: ORDERS_TEST_PRODUCT_NAME,
             pointure: '45',
             couleur: 'Vert',
             prix: 25000,
@@ -261,7 +272,10 @@ describe('/api/orders', () => {
     )) as { quantite_stock: number }[]
     expect(untouchedShortVariant.quantite_stock).toBe(1)
 
-    const [{ count: countAfter }] = (await sql('SELECT COUNT(*) AS count FROM orders')) as {
+    const [{ count: countAfter }] = (await sql(
+      'SELECT COUNT(*) AS count FROM orders WHERE nom_client = $1',
+      [ORDERS_TEST_CLIENT_NAME]
+    )) as {
       count: string
     }[]
     // No order row should have been inserted for this rejected attempt.

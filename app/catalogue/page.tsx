@@ -1,12 +1,13 @@
 import { CategoryNav } from '../../components/CategoryNav'
 import { ProductCard } from '../../components/ProductCard'
+import { sql } from '../../lib/db'
 import type { Categorie, Product } from '../../lib/types'
 
 async function getProducts(categorie?: string): Promise<Product[]> {
-  const url = new URL('/api/products', process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000')
-  if (categorie) url.searchParams.set('categorie', categorie)
-  const res = await fetch(url, { cache: 'no-store' })
-  return res.json()
+  const products = categorie
+    ? await sql('SELECT * FROM products WHERE actif = true AND categorie = $1 ORDER BY created_at DESC', [categorie])
+    : await sql('SELECT * FROM products WHERE actif = true ORDER BY created_at DESC')
+  return products as unknown as Product[]
 }
 
 export default async function CataloguePage({

@@ -1,8 +1,18 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { CategoryNav } from '../components/CategoryNav'
+import { ProductCard } from '../components/ProductCard'
+import { sql } from '../lib/db'
+import type { Product } from '../lib/types'
 
-export default function HomePage() {
+async function getProducts(): Promise<Product[]> {
+  const products = await sql('SELECT * FROM products WHERE actif = true ORDER BY created_at DESC')
+  return products as unknown as Product[]
+}
+
+export default async function HomePage() {
+  const products = await getProducts()
+
   return (
     <main className="min-h-screen bg-waaw-black text-white">
       <section className="relative overflow-hidden px-4 pb-14 pt-20 sm:pt-28">
@@ -35,6 +45,21 @@ export default function HomePage() {
           Parcourir par catégorie
         </p>
         <CategoryNav />
+      </section>
+
+      <section className="border-t border-white/10 px-4 py-10">
+        <p className="mb-4 font-display text-xs uppercase tracking-[0.3em] text-white/40">
+          Nouveautés
+        </p>
+        {products.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-white/50">Aucun produit disponible.</p>
+        )}
       </section>
     </main>
   )

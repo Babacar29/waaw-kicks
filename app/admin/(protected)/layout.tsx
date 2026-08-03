@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { verifySession } from '../../../lib/admin-auth'
+import { AdminShell } from '../../../components/admin/AdminShell'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -10,5 +11,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/admin/login')
   }
 
-  return <div className="bg-white min-h-screen">{children}</div>
+  return <AdminShell>{children}</AdminShell>
 }
