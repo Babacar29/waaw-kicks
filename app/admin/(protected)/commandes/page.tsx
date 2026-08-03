@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { Order, StatutCommande } from '../../../lib/types'
+import type { Order, StatutCommande } from '../../../../lib/types'
 
 const STATUSES: StatutCommande[] = ['nouvelle', 'confirmee', 'livree', 'annulee']
 

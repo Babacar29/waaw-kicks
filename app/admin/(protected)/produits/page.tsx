@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { sql } from '../../../lib/db'
-import type { Product } from '../../../lib/types'
+import { sql } from '../../../../lib/db'
+import type { Product } from '../../../../lib/types'
 
 export default async function AdminProductsPage() {
   const products = (await sql('SELECT * FROM products ORDER BY created_at DESC')) as unknown as Product[]
