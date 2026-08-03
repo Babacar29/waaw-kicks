@@ -15,6 +15,7 @@ export interface UseTiltGestureResult {
 export function useTiltGesture<T extends HTMLElement>(ref: RefObject<T | null>): UseTiltGestureResult {
   const [needsPermissionPrompt, setNeedsPermissionPrompt] = useState(() => {
     if (typeof window === 'undefined') return false
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false
     return getOrientationPermissionAPI() !== null
   })
   const [orientationEnabled, setOrientationEnabled] = useState(() => {
@@ -77,19 +78,21 @@ export function useTiltGesture<T extends HTMLElement>(ref: RefObject<T | null>):
 
     el.addEventListener('mousemove', handleMouseMove)
     el.addEventListener('mouseleave', handleMouseLeave)
-    el.addEventListener('touchmove', handleTouchMove, { passive: true })
-    el.addEventListener('touchend', handleTouchEnd)
     if (orientationEnabled) {
       window.addEventListener('deviceorientation', handleOrientation)
+    } else {
+      el.addEventListener('touchmove', handleTouchMove, { passive: true })
+      el.addEventListener('touchend', handleTouchEnd)
     }
 
     return () => {
       el.removeEventListener('mousemove', handleMouseMove)
       el.removeEventListener('mouseleave', handleMouseLeave)
-      el.removeEventListener('touchmove', handleTouchMove)
-      el.removeEventListener('touchend', handleTouchEnd)
       if (orientationEnabled) {
         window.removeEventListener('deviceorientation', handleOrientation)
+      } else {
+        el.removeEventListener('touchmove', handleTouchMove)
+        el.removeEventListener('touchend', handleTouchEnd)
       }
     }
   }, [ref, orientationEnabled])

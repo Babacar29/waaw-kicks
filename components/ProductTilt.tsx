@@ -20,11 +20,7 @@ export function ProductTilt({ src, alt }: ProductTiltProps) {
   const { needsPermissionPrompt, requestPermission } = useTiltGesture(containerRef)
 
   return (
-    <div
-      ref={containerRef}
-      className="relative aspect-square overflow-hidden rounded-3xl bg-waaw-surface-2"
-      style={CONTAINER_STYLE}
-    >
+    <div ref={containerRef} className="relative aspect-square" style={CONTAINER_STYLE}>
       <div
         aria-hidden
         className="pointer-events-none absolute -inset-10 rounded-full bg-waaw-yellow/20 blur-3xl"
@@ -34,27 +30,29 @@ export function ProductTilt({ src, alt }: ProductTiltProps) {
         }}
       />
 
-      <div
-        className="relative h-full w-full will-change-transform"
-        style={{
-          transform:
-            'rotateX(calc(var(--tilt-x) * 1deg)) rotateY(calc(var(--tilt-y) * 1deg)) scale(1.02)',
-          transformStyle: 'preserve-3d',
-          transition: 'transform 150ms ease-out',
-        }}
-      >
-        <Image src={src} alt={alt} fill priority className="object-cover" />
-      </div>
+      <div className="absolute inset-0 overflow-hidden rounded-3xl bg-waaw-surface-2">
+        <div
+          className="relative h-full w-full will-change-transform"
+          style={{
+            transform:
+              'rotateX(calc(var(--tilt-x) * 1deg)) rotateY(calc(var(--tilt-y) * 1deg)) scale(1.02)',
+            transformStyle: 'preserve-3d',
+            transition: 'transform 150ms ease-out',
+          }}
+        >
+          <Image src={src} alt={alt} fill priority className="object-cover" />
+        </div>
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-3xl mix-blend-soft-light"
-        style={{
-          background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5), transparent 60%)',
-          transform: 'translate3d(calc(var(--tilt-y) * -6px), calc(var(--tilt-x) * -6px), 0)',
-          transition: 'transform 150ms ease-out',
-        }}
-      />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-3xl mix-blend-soft-light"
+          style={{
+            background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5), transparent 60%)',
+            transform: 'translate3d(calc(var(--tilt-y) * -6px), calc(var(--tilt-x) * -6px), 0)',
+            transition: 'transform 150ms ease-out',
+          }}
+        />
+      </div>
 
       {needsPermissionPrompt && (
         <button

@@ -14,6 +14,7 @@ for (const path of pages) {
 test('visual snapshot of a product page', async ({ page }) => {
   await page.goto('/catalogue')
   await page.locator('a[href^="/produit/"]').first().click()
+  await page.waitForURL('**/produit/**')
   await expect(page.locator('h1')).toBeVisible()
   await expect(page).toHaveScreenshot('produit.png', { fullPage: true })
 })

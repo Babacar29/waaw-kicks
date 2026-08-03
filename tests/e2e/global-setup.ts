@@ -21,7 +21,15 @@ export default async function globalSetup(): Promise<void> {
   const [product] = await sql(
     `INSERT INTO products (nom, description, categorie, marque, prix, photos, actif)
      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-    [SEED_PRODUCT_NAME, 'Produit de seed pour les tests E2E', 'homme', 'Waaw Kicks', 25000, [], true]
+    [
+      SEED_PRODUCT_NAME,
+      'Produit de seed pour les tests E2E',
+      'homme',
+      'Waaw Kicks',
+      25000,
+      ['/icons/icon-512.png'],
+      true,
+    ]
   )
 
   await sql(
