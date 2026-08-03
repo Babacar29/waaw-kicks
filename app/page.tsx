@@ -82,20 +82,34 @@ export default async function HomePage() {
       </section>
 
       <section className="border-t border-white/10 px-4 py-10">
-        <p className="mb-4 font-display text-xs uppercase tracking-[0.3em] text-white/40">
-          Parcourir par catégorie
-        </p>
-        <CategoryNav />
+        <Reveal>
+          <div className="mb-4 flex items-center gap-4">
+            <p className="shrink-0 font-display text-xs uppercase tracking-[0.3em] text-white/40">
+              Parcourir par catégorie
+            </p>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+        </Reveal>
+        <Reveal delay={80}>
+          <CategoryNav />
+        </Reveal>
       </section>
 
       <section className="border-t border-white/10 px-4 py-10">
-        <p className="mb-4 font-display text-xs uppercase tracking-[0.3em] text-white/40">
-          Nouveautés
-        </p>
+        <Reveal>
+          <div className="mb-4 flex items-center gap-4">
+            <p className="shrink-0 font-display text-xs uppercase tracking-[0.3em] text-white/40">
+              Nouveautés
+            </p>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+        </Reveal>
         {products.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {products.map((p, i) => (
+              <Reveal key={p.id} delay={Math.min(i * 50, 400)}>
+                <ProductCard product={p} />
+              </Reveal>
             ))}
           </div>
         ) : (
