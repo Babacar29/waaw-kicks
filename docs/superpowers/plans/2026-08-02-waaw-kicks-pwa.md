@@ -2082,6 +2082,288 @@ git commit -m "test: add E2E purchase flow, admin flow, and visual regression"
 
 ---
 
+### Task 14: Admin variant management UI (added post-final-review)
+
+**Context:** The final whole-branch review found that the admin panel has no way to add or edit product variants (pointure/couleur/quantite_stock) — an admin can create a product via `/admin/produits/nouveau` but every new product renders with all sizes disabled in `SizeSelector` until a variant row is inserted directly into the database. This makes the built product-creation flow effectively inert for a real, non-technical shop owner. This task closes that gap: a variants API and an admin page to add variants and edit their stock.
+
+**Files:**
+- Create: `app/api/products/[id]/variants/route.ts` — `POST` (create variant, admin only)
+- Create: `app/api/variants/[id]/route.ts` — `PATCH` (update pointure/couleur/quantite_stock, admin only)
+- Create: `app/admin/produits/[id]/page.tsx` — edit product's variants (list existing variants with editable stock, form to add a new variant)
+- Test: `tests/integration/variants-api.test.ts`
+
+**Interfaces:**
+- Consumes: `sql` from `lib/db.ts`, `requireAdmin` from `lib/admin-auth.ts`, `Variant` from `lib/types.ts`.
+- Produces: `POST /api/products/:id/variants` (body `{ pointure, couleur, quantite_stock }`) → creates a variant row, returns `Variant`, 201. `PATCH /api/variants/:id` (body `{ pointure?, couleur?, quantite_stock? }`) → updates the variant, returns updated `Variant`, 200, or 404 if not found. Both admin-gated (401 without session).
+
+- [ ] **Step 1: Write the failing integration test**
+
+```typescript
+// tests/integration/variants-api.test.ts
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { POST } from '../../app/api/products/[id]/variants/route'
+import { PATCH } from '../../app/api/variants/[id]/route'
+import { sql } from '../../lib/db'
+import { signSession } from '../../lib/admin-auth'
+
+describe('variants API', () => {
+  let productId: number
+
+  beforeAll(async () => {
+    process.env.ADMIN_SESSION_SECRET = 'test-secret-at-least-32-characters-long'
+    await sql('DELETE FROM variants')
+    await sql('DELETE FROM products')
+    const [product] = await sql(
+      `INSERT INTO products (nom, categorie, prix) VALUES ('Air Waaw', 'homme', 25000) RETURNING id`
+    )
+    productId = product.id
+  })
+
+  afterAll(async () => {
+    await sql('DELETE FROM variants')
+    await sql('DELETE FROM products')
+  })
+
+  it('rejects variant creation without admin session', async () => {
+    const req = new Request(`http://localhost/api/products/${productId}/variants`, {
+      method: 'POST',
+      body: JSON.stringify({ pointure: '42', couleur: 'Noir', quantite_stock: 5 }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: String(productId) }) })
+    expect(res.status).toBe(401)
+  })
+
+  it('creates a variant with a valid admin session', async () => {
+    const token = await signSession()
+    const req = new Request(`http://localhost/api/products/${productId}/variants`, {
+      method: 'POST',
+      headers: { cookie: `admin_session=${token}` },
+      body: JSON.stringify({ pointure: '42', couleur: 'Noir', quantite_stock: 5 }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: String(productId) }) })
+    expect(res.status).toBe(201)
+    const created = await res.json()
+    expect(created.quantite_stock).toBe(5)
+  })
+
+  it('updates a variant stock with a valid admin session', async () => {
+    const [variant] = await sql('SELECT id FROM variants LIMIT 1')
+    const token = await signSession()
+    const req = new Request(`http://localhost/api/variants/${variant.id}`, {
+      method: 'PATCH',
+      headers: { cookie: `admin_session=${token}` },
+      body: JSON.stringify({ quantite_stock: 10 }),
+    })
+    const res = await PATCH(req, { params: Promise.resolve({ id: String(variant.id) }) })
+    expect(res.status).toBe(200)
+    const updated = await res.json()
+    expect(updated.quantite_stock).toBe(10)
+  })
+
+  it('returns 404 when updating an unknown variant', async () => {
+    const token = await signSession()
+    const req = new Request('http://localhost/api/variants/999999', {
+      method: 'PATCH',
+      headers: { cookie: `admin_session=${token}` },
+      body: JSON.stringify({ quantite_stock: 1 }),
+    })
+    const res = await PATCH(req, { params: Promise.resolve({ id: '999999' }) })
+    expect(res.status).toBe(404)
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm run test -- tests/integration/variants-api.test.ts`
+Expected: FAIL — routes do not exist.
+
+- [ ] **Step 3: Implement `app/api/products/[id]/variants/route.ts`**
+
+```typescript
+// app/api/products/[id]/variants/route.ts
+import { sql } from '../../../../../lib/db'
+import { requireAdmin } from '../../../../../lib/admin-auth'
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await requireAdmin(request))) {
+    return Response.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+  const { id } = await params
+  const { pointure, couleur, quantite_stock } = await request.json()
+
+  if (!pointure || !couleur || !Number.isInteger(quantite_stock) || quantite_stock < 0) {
+    return Response.json({ error: 'Champs requis manquants ou invalides' }, { status: 400 })
+  }
+
+  const [variant] = await sql(
+    `INSERT INTO variants (product_id, pointure, couleur, quantite_stock)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [id, pointure, couleur, quantite_stock]
+  )
+
+  return Response.json(variant, { status: 201 })
+}
+```
+
+- [ ] **Step 4: Implement `app/api/variants/[id]/route.ts`**
+
+```typescript
+// app/api/variants/[id]/route.ts
+import { sql } from '../../../../lib/db'
+import { requireAdmin } from '../../../../lib/admin-auth'
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await requireAdmin(request))) {
+    return Response.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+  const { id } = await params
+  const body = await request.json()
+
+  const [existing] = await sql('SELECT * FROM variants WHERE id = $1', [id])
+  if (!existing) {
+    return Response.json({ error: 'Variante introuvable' }, { status: 404 })
+  }
+
+  const pointure = body.pointure ?? existing.pointure
+  const couleur = body.couleur ?? existing.couleur
+  const quantite_stock = body.quantite_stock ?? existing.quantite_stock
+
+  if (!Number.isInteger(quantite_stock) || quantite_stock < 0) {
+    return Response.json({ error: 'Quantité invalide' }, { status: 400 })
+  }
+
+  const [updated] = await sql(
+    `UPDATE variants SET pointure = $1, couleur = $2, quantite_stock = $3 WHERE id = $4 RETURNING *`,
+    [pointure, couleur, quantite_stock, id]
+  )
+
+  return Response.json(updated)
+}
+```
+
+- [ ] **Step 5: Run test to verify it passes**
+
+Run: `npm run test -- tests/integration/variants-api.test.ts`
+Expected: PASS (4 tests)
+
+- [ ] **Step 6: Commit the API**
+
+```bash
+git add app/api/products/[id]/variants app/api/variants tests/integration/variants-api.test.ts
+git commit -m "feat: add variants API (create, update stock)"
+```
+
+- [ ] **Step 7: Implement the admin edit-product page**
+
+```tsx
+// app/admin/produits/[id]/page.tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import type { Product, Variant } from '../../../../lib/types'
+
+export default function EditProductPage() {
+  const { id } = useParams<{ id: string }>()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [form, setForm] = useState({ pointure: '', couleur: '', quantite_stock: 0 })
+  const [error, setError] = useState<string | null>(null)
+
+  async function reload() {
+    const res = await fetch(`/api/products/${id}`)
+    setProduct(await res.json())
+  }
+
+  useEffect(() => {
+    reload()
+  }, [id])
+
+  async function addVariant(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    const res = await fetch(`/api/products/${id}/variants`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    if (!res.ok) {
+      const body = await res.json()
+      setError(body.error)
+      return
+    }
+    setForm({ pointure: '', couleur: '', quantite_stock: 0 })
+    reload()
+  }
+
+  async function updateStock(variantId: number, quantite_stock: number) {
+    await fetch(`/api/variants/${variantId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantite_stock }),
+    })
+    reload()
+  }
+
+  if (!product) return <p className="p-6">Chargement...</p>
+
+  return (
+    <main className="p-6 max-w-lg">
+      <h1 className="font-bold text-xl mb-4">{product.nom} — Variantes</h1>
+
+      <table className="w-full text-left border-collapse mb-6">
+        <thead>
+          <tr className="border-b"><th>Pointure</th><th>Couleur</th><th>Stock</th></tr>
+        </thead>
+        <tbody>
+          {(product.variants ?? []).map((v: Variant) => (
+            <tr key={v.id} className="border-b">
+              <td className="py-2">{v.pointure}</td>
+              <td>{v.couleur}</td>
+              <td>
+                <input
+                  type="number"
+                  min={0}
+                  defaultValue={v.quantite_stock}
+                  onBlur={(e) => updateStock(v.id, Number(e.target.value))}
+                  className="w-20 border rounded p-1"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2 className="font-bold mb-2">Ajouter une variante</h2>
+      <form onSubmit={addVariant} className="space-y-3">
+        <input placeholder="Pointure" value={form.pointure} onChange={(e) => setForm({ ...form, pointure: e.target.value })} className="w-full border rounded p-2" />
+        <input placeholder="Couleur" value={form.couleur} onChange={(e) => setForm({ ...form, couleur: e.target.value })} className="w-full border rounded p-2" />
+        <input type="number" min={0} placeholder="Stock" value={form.quantite_stock} onChange={(e) => setForm({ ...form, quantite_stock: Number(e.target.value) })} className="w-full border rounded p-2" />
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        <button type="submit" className="bg-black text-white px-4 py-2 rounded">Ajouter</button>
+      </form>
+    </main>
+  )
+}
+```
+
+- [ ] **Step 8: Link to the edit page from the admin produits list**
+
+Edit `app/admin/produits/page.tsx` (from Task 11): wrap each row's `nom` cell in a `Link` to `/admin/produits/${p.id}`, or add an explicit "Gérer" link/button per row — either is acceptable, keep it a one-line change.
+
+- [ ] **Step 9: Manual verification**
+
+Run: `npm run dev`, log in as admin, create a product via `/admin/produits/nouveau`, navigate to `/admin/produits/:id`, add a variant, confirm it appears in the table and the stock input is editable (blur triggers the PATCH), confirm the product now shows an enabled size in `/produit/:id`'s `SizeSelector` on the public site.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add app/admin/produits
+git commit -m "feat: add admin variant management page"
+```
+
+---
+
 ## Deployment Notes (not a task — reference for whoever ships this)
 
 - Connect the repo to Vercel, add the Neon Postgres integration (sets `DATABASE_URL` automatically), enable Vercel Blob (sets `BLOB_READ_WRITE_TOKEN` automatically).
