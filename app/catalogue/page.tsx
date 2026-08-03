@@ -18,14 +18,20 @@ export default async function CataloguePage({
   const products = await getProducts(categorie)
 
   return (
-    <main className="bg-waaw-black min-h-screen text-white px-4 py-6">
-      <CategoryNav active={categorie as Categorie | undefined} />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+    <main className="min-h-screen bg-waaw-black px-4 py-8 text-white">
+      <h1 className="font-display text-3xl uppercase tracking-tight sm:text-4xl">Catalogue</h1>
+      <p className="mt-1 text-sm text-white/50">{products.length} paire{products.length > 1 ? 's' : ''} disponible{products.length > 1 ? 's' : ''}</p>
+      <div className="mt-5">
+        <CategoryNav active={categorie as Categorie | undefined} />
+      </div>
+      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
         {products.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}
       </div>
-      {products.length === 0 && <p className="text-white/50 mt-8">Aucun produit dans cette catégorie.</p>}
+      {products.length === 0 && (
+        <p className="mt-16 text-center text-white/50">Aucun produit dans cette catégorie.</p>
+      )}
     </main>
   )
 }

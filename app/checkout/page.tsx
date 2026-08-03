@@ -59,36 +59,64 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="bg-waaw-black min-h-screen text-white px-4 py-6">
-      <h1 className="font-display uppercase text-2xl mb-4">Checkout</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          placeholder="Nom complet"
-          value={form.nom}
-          onChange={(e) => setForm({ ...form, nom: e.target.value })}
-          className="w-full bg-white/10 rounded p-3"
-        />
-        <input
-          placeholder="Téléphone"
-          value={form.telephone}
-          onChange={(e) => setForm({ ...form, telephone: e.target.value })}
-          className="w-full bg-white/10 rounded p-3"
-        />
-        <input
-          placeholder="Adresse"
-          value={form.adresse}
-          onChange={(e) => setForm({ ...form, adresse: e.target.value })}
-          className="w-full bg-white/10 rounded p-3"
-        />
-        {error && <p className="text-waaw-red">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-waaw-yellow text-waaw-black font-display uppercase py-3 rounded disabled:opacity-50"
-        >
-          {loading ? 'Envoi...' : 'Commander sur WhatsApp'}
-        </button>
-      </form>
+    <main className="min-h-screen bg-waaw-black px-4 py-8 text-white">
+      <div className="mx-auto max-w-md">
+        <h1 className="font-display text-3xl uppercase tracking-tight">Checkout</h1>
+        <p className="mt-1 text-sm text-white/50">On te contacte sur WhatsApp pour confirmer.</p>
+
+        <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-waaw-surface px-4 py-3">
+          <span className="text-sm text-white/50">Total à payer</span>
+          <span className="font-display text-lg text-waaw-yellow">{total.toLocaleString('fr-FR')} FCFA</span>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+          <div>
+            <label className="mb-1.5 block text-xs uppercase tracking-wide text-white/40">
+              Nom complet
+            </label>
+            <input
+              placeholder="Aminata Diop"
+              value={form.nom}
+              onChange={(e) => setForm({ ...form, nom: e.target.value })}
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-3.5 text-white placeholder:text-white/25 outline-none transition-colors focus:border-waaw-yellow"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs uppercase tracking-wide text-white/40">
+              Téléphone
+            </label>
+            <input
+              placeholder="77 123 45 67"
+              value={form.telephone}
+              onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-3.5 text-white placeholder:text-white/25 outline-none transition-colors focus:border-waaw-yellow"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs uppercase tracking-wide text-white/40">
+              Adresse de livraison
+            </label>
+            <input
+              placeholder="Sacré-Cœur 3, Dakar"
+              value={form.adresse}
+              onChange={(e) => setForm({ ...form, adresse: e.target.value })}
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-3.5 text-white placeholder:text-white/25 outline-none transition-colors focus:border-waaw-yellow"
+            />
+          </div>
+          {error && (
+            <p className="rounded-xl border border-waaw-red/30 bg-waaw-red/10 px-4 py-3 text-sm text-waaw-red">
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-full bg-waaw-yellow py-4 font-display uppercase tracking-wide text-waaw-black shadow-[0_10px_30px_-8px_rgba(255,212,0,0.5)] transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+          >
+            {loading ? 'Envoi...' : 'Commander sur WhatsApp'}
+          </button>
+        </form>
+      </div>
     </main>
   )
 }

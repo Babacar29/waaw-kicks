@@ -1,24 +1,41 @@
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { CategoryNav } from '../components/CategoryNav'
 
 export default function HomePage() {
   return (
-    <main className="bg-waaw-black min-h-screen text-white">
-      <section className="px-4 py-16 text-center">
-        <h1 className="font-display uppercase text-5xl leading-tight">
+    <main className="min-h-screen bg-waaw-black text-white">
+      <section className="relative overflow-hidden px-4 pb-14 pt-20 sm:pt-28">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(255,212,0,0.16),transparent)]"
+        />
+        <p className="text-center font-display text-sm uppercase tracking-[0.35em] text-waaw-yellow">
+          Sénégal · Depuis 2024
+        </p>
+        <h1 className="mt-4 text-center font-display uppercase leading-[0.9] tracking-tight text-white text-[15vw] sm:text-7xl md:text-8xl">
           Waaw<span className="text-waaw-yellow">Kicks</span>
         </h1>
-        <p className="mt-3 text-white/70">Waaw, tu vas kiffer. Sneakers Homme, Femme, Bébé.</p>
-        <Link
-          href="/catalogue"
-          className="inline-block mt-6 bg-waaw-yellow text-waaw-black font-display uppercase px-6 py-3 rounded"
-        >
-          Voir le catalogue
-        </Link>
+        <p className="mx-auto mt-6 max-w-md text-center text-base text-white/60 sm:text-lg">
+          Waaw, tu vas kiffer. Les meilleures sneakers Homme, Femme et Bébé, livrées chez toi.
+        </p>
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/catalogue"
+            className="group inline-flex items-center gap-2 rounded-full bg-waaw-yellow px-7 py-3.5 font-display uppercase tracking-wide text-waaw-black shadow-[0_10px_30px_-8px_rgba(255,212,0,0.5)] transition-transform hover:scale-105"
+          >
+            Voir le catalogue
+            <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
       </section>
-      <div className="px-4">
+
+      <section className="border-t border-white/10 px-4 py-10">
+        <p className="mb-4 font-display text-xs uppercase tracking-[0.3em] text-white/40">
+          Parcourir par catégorie
+        </p>
         <CategoryNav />
-      </div>
+      </section>
     </main>
   )
 }

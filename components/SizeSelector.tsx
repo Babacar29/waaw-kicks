@@ -25,12 +25,12 @@ export function SizeSelector({
               setSelectedId(v.id)
               onSelect(v)
             }}
-            className={`px-3 py-2 rounded border font-display text-sm ${
+            className={`rounded-xl border px-4 py-2.5 font-display text-sm transition-all ${
               disabled
-                ? 'border-white/10 text-white/30 line-through cursor-not-allowed'
+                ? 'cursor-not-allowed border-white/10 text-white/25 line-through'
                 : selectedId === v.id
-                ? 'border-waaw-yellow bg-waaw-yellow text-waaw-black'
-                : 'border-white/30 text-white'
+                ? 'border-waaw-yellow bg-waaw-yellow text-waaw-black shadow-[0_0_16px_rgba(255,212,0,0.3)]'
+                : 'border-white/15 text-white hover:border-white/40'
             }`}
           >
             {v.pointure} · {v.couleur}
