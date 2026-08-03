@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# superpowers sdd workspace (ledgers, briefs, review packages)
+/.superpowers/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
