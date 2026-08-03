@@ -51,7 +51,7 @@ describe('Reveal', () => {
     mockMatchMedia(true)
     mockIntersectionObserver()
 
-    render(React.createElement(Reveal, {}, React.createElement('p', {}, 'Hello')))
+    render(React.createElement(Reveal, { children: React.createElement('p', {}, 'Hello') }))
 
     expect(screen.getByText('Hello').parentElement?.className).toContain('opacity-100')
   })
@@ -60,7 +60,7 @@ describe('Reveal', () => {
     mockMatchMedia(false)
     const { trigger } = mockIntersectionObserver()
 
-    render(React.createElement(Reveal, {}, React.createElement('p', {}, 'Hello')))
+    render(React.createElement(Reveal, { children: React.createElement('p', {}, 'Hello') }))
 
     expect(screen.getByText('Hello').parentElement?.className).toContain('opacity-0')
 
@@ -73,7 +73,7 @@ describe('Reveal', () => {
     mockMatchMedia(false)
     vi.stubGlobal('IntersectionObserver', undefined)
 
-    render(React.createElement(Reveal, {}, React.createElement('p', {}, 'Hello')))
+    render(React.createElement(Reveal, { children: React.createElement('p', {}, 'Hello') }))
 
     expect(screen.getByText('Hello').parentElement?.className).toContain('opacity-100')
   })
