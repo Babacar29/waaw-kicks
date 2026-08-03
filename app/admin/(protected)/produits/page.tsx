@@ -15,7 +15,7 @@ export default async function AdminProductsPage() {
       </div>
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b"><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Actif</th></tr>
+          <tr className="border-b"><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Actif</th><th></th></tr>
         </thead>
         <tbody>
           {products.map((p) => (
@@ -24,6 +24,7 @@ export default async function AdminProductsPage() {
               <td>{p.categorie}</td>
               <td>{p.prix.toLocaleString('fr-FR')} FCFA</td>
               <td>{p.actif ? 'Oui' : 'Non'}</td>
+              <td><Link href={`/admin/produits/${p.id}`} className="text-blue-600 underline">Gérer</Link></td>
             </tr>
           ))}
         </tbody>
