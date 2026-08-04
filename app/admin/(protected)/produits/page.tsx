@@ -1,13 +1,21 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { sql } from '../../../../lib/db'
-import type { Product } from '../../../../lib/types'
+import type { Product, Variant } from '../../../../lib/types'
 import { AdminPageHeader, AdminButton } from '../../../../components/admin/ui'
 import { ProductsTable } from '../../../../components/admin/ProductsTable'
 import { BulkImportButton } from '../../../../components/admin/BulkImportButton'
 
 export default async function AdminProductsPage() {
   const products = (await sql('SELECT * FROM products ORDER BY created_at DESC')) as unknown as Product[]
+  const variants = (await sql(
+    'SELECT * FROM variants ORDER BY pointure, couleur'
+  )) as unknown as Variant[]
+
+  const variantsByProduct = variants.reduce<Record<number, Variant[]>>((acc, v) => {
+    ;(acc[v.product_id] ??= []).push(v)
+    return acc
+  }, {})
 
   return (
     <div>
@@ -26,7 +34,7 @@ export default async function AdminProductsPage() {
           </div>
         }
       />
-      <ProductsTable products={products} />
+      <ProductsTable products={products} variantsByProduct={variantsByProduct} />
     </div>
   )
 }
