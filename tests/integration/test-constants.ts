@@ -5,6 +5,7 @@
 // separate test database), so unscoped queries here would corrupt or read
 // real data.
 export const PRODUCTS_TEST_PRODUCT_NAME = 'Vitest Products API Test Sneaker'
+export const BULK_TEST_PRODUCT_NAME_PREFIX = 'Vitest Bulk Import Test Sneaker'
 export const VARIANTS_TEST_PRODUCT_NAME = 'Vitest Variants API Test Sneaker'
 export const ORDERS_TEST_PRODUCT_NAME = 'Vitest Orders API Test Sneaker'
 export const ORDERS_TEST_CLIENT_NAME = 'Vitest Orders API Test Client'
