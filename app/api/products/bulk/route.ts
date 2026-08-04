@@ -1,7 +1,7 @@
 import { sql } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/admin-auth'
 
-const VALID_CATEGORIES = ['homme', 'femme', 'bebe']
+const VALID_CATEGORIES = ['homme', 'femme', 'enfant', 'unisex']
 
 interface BulkProductInput {
   nom?: unknown

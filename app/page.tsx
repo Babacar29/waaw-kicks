@@ -39,7 +39,7 @@ export default async function HomePage() {
         </Reveal>
         <Reveal delay={160}>
           <p className="mx-auto mt-6 max-w-md text-center text-base text-white/60 sm:text-lg">
-            Waaw, tu vas kiffer. Les meilleures sneakers Homme, Femme et Bébé, livrées chez toi.
+            Waaw, tu vas kiffer. Les meilleures sneakers Homme, Femme et Enfant, livrées chez toi.
           </p>
         </Reveal>
         <Reveal delay={240}>
@@ -73,7 +73,7 @@ export default async function HomePage() {
                 Née à Dakar, WaawKicks sélectionne les sneakers qui comptent vraiment.
               </p>
               <p className="mt-3 text-sm leading-relaxed text-white/60">
-                Chaque paire est choisie pour sa qualité et son style, homme, femme ou bébé, puis livrée
+                Chaque paire est choisie pour sa qualité et son style, homme, femme ou enfant, puis livrée
                 directement chez toi, où que tu sois au Sénégal.
               </p>
             </div>

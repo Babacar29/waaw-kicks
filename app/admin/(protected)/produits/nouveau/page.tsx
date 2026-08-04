@@ -94,7 +94,8 @@ export default function NewProductPage() {
               >
                 <option value="homme">Homme</option>
                 <option value="femme">Femme</option>
-                <option value="bebe">Bébé</option>
+                <option value="enfant">Enfant</option>
+                <option value="unisex">Unisex</option>
               </AdminSelect>
             </Field>
             <Field label="Prix (FCFA)" required>

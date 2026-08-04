@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   nom TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
-  categorie TEXT NOT NULL CHECK (categorie IN ('homme', 'femme', 'bebe')),
+  categorie TEXT NOT NULL CHECK (categorie IN ('homme', 'femme', 'enfant', 'unisex')),
   marque TEXT NOT NULL DEFAULT '',
   prix INTEGER NOT NULL,
   photos TEXT[] NOT NULL DEFAULT '{}',

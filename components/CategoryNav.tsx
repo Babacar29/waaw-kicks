@@ -4,7 +4,8 @@ import type { Categorie } from '../lib/types'
 const CATEGORIES: { value: Categorie; label: string }[] = [
   { value: 'homme', label: 'Homme' },
   { value: 'femme', label: 'Femme' },
-  { value: 'bebe', label: 'Bébé' },
+  { value: 'enfant', label: 'Enfant' },
+  { value: 'unisex', label: 'Unisex' },
 ]
 
 export function CategoryNav({ active }: { active?: Categorie }) {

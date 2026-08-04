@@ -1,4 +1,4 @@
-export type Categorie = 'homme' | 'femme' | 'bebe'
+export type Categorie = 'homme' | 'femme' | 'enfant' | 'unisex'
 export type StatutCommande = 'nouvelle' | 'confirmee' | 'livree' | 'annulee'
 
 export interface Variant {

@@ -17,7 +17,7 @@ const bebasNeue = Bebas_Neue({
 
 export const metadata: Metadata = {
   title: "Waaw Kicks",
-  description: "Sneakers Homme, Femme, Bébé au Sénégal",
+  description: "Sneakers Homme, Femme, Enfant au Sénégal",
   manifest: "/manifest.json",
 };
 
