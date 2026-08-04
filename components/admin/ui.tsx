@@ -144,8 +144,8 @@ export function AdminEmptyState({ title, description }: { title: string; descrip
 
 export function AdminAlert({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="rounded-xl border border-waaw-red/30 bg-waaw-red/10 px-3.5 py-2.5 text-sm text-red-300">
+    <div role="alert" className="rounded-xl border border-waaw-red/30 bg-waaw-red/10 px-3.5 py-2.5 text-sm text-red-300">
       {children}
-    </p>
+    </div>
   )
 }
