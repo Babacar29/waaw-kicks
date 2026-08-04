@@ -19,7 +19,11 @@ const hiddenClasses: Record<RevealVariant, string> = {
 
 export function Reveal({ children, className = '', delay = 0, variant = 'up' }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
+  // Default to visible so SSR output and the very first client render never hide
+  // content (avoids a flash-of-invisible-content if JS is slow to hydrate). The
+  // effect below flips this to hidden client-side only when we're certain an
+  // IntersectionObserver-driven reveal will actually run.
+  const [visible, setVisible] = useState(true)
 
   useEffect(() => {
     const node = ref.current
@@ -30,6 +34,8 @@ export function Reveal({ children, className = '', delay = 0, variant = 'up' }: 
       setVisible(true)
       return
     }
+
+    setVisible(false)
 
     const observer = new IntersectionObserver(
       ([entry]) => {
